@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  calSyncLambda
+
+  Sample SAM Template for calSyncLambda
+  
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 120
+    Runtime: nodejs14.x
+    Environment:
+      Variables:
+
+
+Resources:
+  WebhookService:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: subscription-refresh/dist
+      Handler: dist/WebhookService.lambdaHandler
+      Environment: 
+        Variables:
+          WEBHOOK_RESPONDER_NAME: !Ref WebhookResponder
+      Events: 
+        Webhook:
+          Type: Api
+          Properties:
+            Path: /Webhooks/{webhookType}
+            Method: post
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref WebhookResponder
+  SubscriptionRefreshService:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      Handler: dist/SubscriptionService.lambdaHandler
+  WebhookResponder:
+      Type: AWS::Serverless::Function
+      Properties:
+        Handler: dist/WebhookResponder.lambdaHandler
+      
+
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Webhooks key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  SubscriptionRefreshService:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value:  "deployed"
+
+  WebhookService:
+    Description: 'API Gateway endpoint URL for Prod stage for Hello function'
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Webhooks/'
+  
