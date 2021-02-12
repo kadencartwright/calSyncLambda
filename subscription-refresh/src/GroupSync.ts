@@ -66,17 +66,28 @@ const groupSync = async function (webhookData:any,client:Client): Promise<string
                     if (userChange['@removed']=='deleted'){
                         for (const event of events){
                             console.log('updating event')
-                            await client.api(`/users/${process.env.CALENDAR_OWNER_UPN}/calendarGroups/${group.id}/calendars/${calendar.id}/events/${event.id}?$select=id`)
-                            .update({attendees:[...event.attendees.filter((e: { emailAddress: { address: any; }; })=>e.emailAddress.address!=attendee.emailAddress.address)]})
+                            console.log('event:')
+                            if( new Date(event.end.dateTime) > new Date()){
+                                //only affect future events, not past ones
+                                await client.api(`/users/${process.env.CALENDAR_OWNER_UPN}/calendarGroups/${group.id}/calendars/${calendar.id}/events/${event.id}?$select=id`)
+                                .update({attendees:[...event.attendees.filter((e: { emailAddress: { address: any; }; })=>e.emailAddress.address!=attendee.emailAddress.address)]})
                             //if the user was removed, we will destructure a list of all the current attendees minus the affected user and send back to graph to update the attendee list in the event
+                            }
+                            
                         }
                     }else{
                         for (const event of events){
                             console.log('updating event')
-                            await client.api(`/users/${process.env.CALENDAR_OWNER_UPN}/calendarGroups/${group.id}/calendars/${calendar.id}/events/${event.id}?$select=id`)
-                            .update({attendees:[...event.attendees.filter((e: { emailAddress: { address: any; }; })=>e.emailAddress.address!=attendee.emailAddress.address),attendee]})//if attendee is already in an event we do not want to add them again, so I filtered this array to avoid duplications
-                            //if the user was added, we will destructure a list of all the current attendees and append the affected user and send back to graph to update the attendee list in the event
-                            //we also subtract the attendee from the original list to avoid attendee duplication
+                            console.log('event:')
+                            console.log(new Date(event.end.dateTime))
+                            if( new Date(event.end.dateTime) > new Date()){
+                                //only affect future events, not past ones
+                                await client.api(`/users/${process.env.CALENDAR_OWNER_UPN}/calendarGroups/${group.id}/calendars/${calendar.id}/events/${event.id}?$select=id`)
+                                .update({attendees:[...event.attendees.filter((e: { emailAddress: { address: any; }; })=>e.emailAddress.address!=attendee.emailAddress.address),attendee]})//if attendee is already in an event we do not want to add them again, so I filtered this array to avoid duplications
+                                //if the user was added, we will destructure a list of all the current attendees and append the affected user and send back to graph to update the attendee list in the event
+                                //we also subtract the attendee from the original list to avoid attendee duplication
+                            }
+                            
                         }
                     }
                 }
