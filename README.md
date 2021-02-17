@@ -20,6 +20,17 @@ you will need:
 		 
  - Generate an app registration in your Azure AD tenant
 	 - generate client secret for your registration and make note of it's value. you will use this and the Application (client) ID as environment variables for the lambda Functions to use in order to call MSGraph
+     - grant the app the proper permissions
+         - from your app registration page go to 'api permissions'
+         - click 'add a permission'
+         - select 'Microsoft Graph'
+         - select 'Application Permissions'
+         - select the following permissions
+             - Calendars.ReadWrite
+             - Group.ReadWrite.All
+             - GroupMember.Read.All
+             - User.Read.All
+         - sign in with an admin account for your Azure tenant and grant the permissions
  - Fill in environment variables (descriptions of $VAR's to follow)
 
 deploy (first time): 
