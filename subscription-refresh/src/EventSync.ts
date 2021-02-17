@@ -15,6 +15,7 @@ const eventSync = async function (webhookData:any, client:Client): Promise<strin
 
             switch(change.changeType){
                 case "created":
+                
                     await createdHandler(change,client)
                     break;
                 case "updated":
@@ -41,9 +42,17 @@ const eventSync = async function (webhookData:any, client:Client): Promise<strin
         console.log('getting calendar info from graph')
         let calendarName = (await client.api(`/users/${process.env.CALENDAR_OWNER_UPN}/calendars/${event.calendar.id}`).get()).name
         //find the group
-        console.log('getting corresponding group info')
-        let group = (await client.api(`/groups`).filter(`startswith(mail,'${calendarName}@' ) `).get()).value[0]
-        
+        console.log(`getting corresponding group info for calendar named: ${calendarName}`)
+        console.log(`filtered by: startswith(mail,'${process.env.GROUP_EMAIL_PREPEND}${calendarName.replace(' ','').toLowerCase()}@' ) `)
+        let response = await client.api(`/groups?$filter=startswith(mail,'meetingdisttest2@')`).filter(`startswith(mail,'${process.env.GROUP_EMAIL_PREPEND}${calendarName.replace(' ','').toLowerCase()}@' ) `).get()
+
+        console.log('response from graph:')
+        console.log(JSON.stringify(response))
+
+        let group = response.value[0]
+        console.log('groups')
+        console.log(JSON.stringify(group))
+
         console.log('getting group members')
        try{     
             let membersResponse = (await client.api(`/groups/${group.id}/members`).select('mail,displayName').get())
@@ -56,7 +65,9 @@ const eventSync = async function (webhookData:any, client:Client): Promise<strin
                         break
                     }
                 }
-                if (!found){
+                if (!found && !!member?.mail){
+                    console.log(`added attendee: ${member.mail}`)
+
                     attendees.push({emailAddress:{address:member.mail,name:member.displayName}})
                 }
             }

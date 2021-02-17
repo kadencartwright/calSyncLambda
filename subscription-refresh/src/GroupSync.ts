@@ -43,7 +43,8 @@ const groupSync = async function (webhookData:any,client:Client): Promise<string
 
             //wait for the group resource (selected only the displayName from graph, see 'odata query params' in MS Graph docs for details) and set the name to a var
             console.log('getting groups display name')
-            let groupName = (await client.api(`/groups/${change.resourceData.id}?$select=displayName`).get()).displayName 
+            //let groupName = (await client.api(`/groups/${change.resourceData.id}?$select=displayName`).get()).displayName 
+            let groupMail:String = (await client.api(`/groups/${change.resourceData.id}?$select=mail`).get()).mail
 
 
             //get the cal groups of the user that owns the calendars to sync to. set the name of the group as an app config setting or in local.settings.json for local development
@@ -56,7 +57,8 @@ const groupSync = async function (webhookData:any,client:Client): Promise<string
                 //the filter at the end of this api call ensures we only update events in the calendar corresponding to the group that has been changed
                 console.log('getting calendars in group')
                 let calendars = (await getAllPagesFromGraph(client.api(`/users/${process.env.CALENDAR_OWNER_UPN}/calendarGroups/${group.id}/calendars`)))
-                .filter(calendar=> calendar.name.toLowerCase() == groupName.toLowerCase());
+                //.filter(calendar=> calendar.name.toLowerCase() == groupName.toLowerCase());
+                .filter(calendar=> groupMail.toLowerCase().startsWith(`${process.env.GROUP_EMAIL_PREPEND}${calendar.name.toLowerCase().replace(' ','')}@`));
                 //now that we have all the calendars contained in the current group we can iterate through them and act on all their children (individual events)
                 for (const calendar of calendars){
                     //get all the individual events in a calendar
@@ -84,6 +86,7 @@ const groupSync = async function (webhookData:any,client:Client): Promise<string
                                 //only affect future events, not past ones
                                 await client.api(`/users/${process.env.CALENDAR_OWNER_UPN}/calendarGroups/${group.id}/calendars/${calendar.id}/events/${event.id}?$select=id`)
                                 .update({attendees:[...event.attendees.filter((e: { emailAddress: { address: any; }; })=>e.emailAddress.address!=attendee.emailAddress.address),attendee]})//if attendee is already in an event we do not want to add them again, so I filtered this array to avoid duplications
+                                console.log(`added attendee: ${attendee.emailAddress.address}`)
                                 //if the user was added, we will destructure a list of all the current attendees and append the affected user and send back to graph to update the attendee list in the event
                                 //we also subtract the attendee from the original list to avoid attendee duplication
                             }

@@ -51,7 +51,7 @@ export const lambdaHandler = async function(event: any):Promise<String>{
         changeType: "updated,deleted",
         url: `${process.env.WEBHOOK_URL}/Calendars`,
         secret: process.env.SUBSCRIPTION_SECRET,
-        name: `/users/${process.env.CALENDAR_OWNER_UPN}/calendargroups/${calendarGroup.id}/calendars`,
+        name: `/users/${userId}/calendargroups/${calendarGroup.id}/calendars`,
       }
 
 

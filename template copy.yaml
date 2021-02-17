@@ -8,11 +8,18 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 120
+    Timeout: 30
     Runtime: nodejs14.x
     Environment:
       Variables:
-
+        CLIENT_ID: your client id here
+        CLIENT_SECRET: your client secret here
+        WEBHOOK_URL: your webhook url here
+        SUBSCRIPTION_SECRET: your subscription secret here
+        TENANT_ID: your azure AD tenant ID here
+        CALENDAR_OWNER_UPN: your calendar anchor UPN here
+        CALENDAR_GROUP_NAME: your calendar group name here
+        GROUP_EMAIL_PREPEND: your random string here
 
 Resources:
   WebhookService:
@@ -36,6 +43,11 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       Handler: dist/SubscriptionService.lambdaHandler
+      Events:
+        RefreshEvery12hrs:
+          Type: Schedule
+          Properties:
+            Schedule: rate(12 hours)
   WebhookResponder:
       Type: AWS::Serverless::Function
       Properties:
@@ -44,14 +56,7 @@ Resources:
 
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Webhooks key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  SubscriptionRefreshService:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value:  "deployed"
-
   WebhookService:
-    Description: 'API Gateway endpoint URL for Prod stage for Hello function'
+    Description: 'API Gateway endpoint URL for Prod stage CalSync'
     Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Webhooks/'
   

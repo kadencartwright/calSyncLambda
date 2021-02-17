@@ -11,25 +11,19 @@ export const lambdaHandler = async (event: any): Promise<boolean> => {
         authProvider: new MyAuthenticationProvider()
     };
     const client: Client = await Client.initWithMiddleware(options)
-    console.log(`time to say 'hello '`);
+    console.log(JSON.stringify(event))
     if (!!event['type']){
         switch (event['type'].toLowerCase()) {
             case "events":
                 console.log('events')
-                console.log(event['type'])
-                console.log(event['data'])
                 console.log(await EventSync(event['data'],client))
                 break;
             case "calendars":
                 console.log('calendars')
-                console.log(event['type'])
-                console.log(event['data'])
                 console.log(await CalendarSync(event['data'],client))
                 break;
             case "groups":
                 console.log('groups')
-                console.log(event['type'])
-                console.log(event['data'])
                 console.log(await GroupSync(event['data'],client))
                 break;
             default:
