@@ -30,6 +30,7 @@ you will need:
              - Group.ReadWrite.All
              - GroupMember.Read.All
              - User.Read.All
+             - OrgContact.read.all
          - sign in with an admin account for your Azure tenant and grant the permissions
  - Fill in environment variables (descriptions of $VAR's to follow)
 
