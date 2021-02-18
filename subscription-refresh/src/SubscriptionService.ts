@@ -3,6 +3,7 @@ import 'isomorphic-fetch'
 import { MyAuthenticationProvider } from './MyAuthenticationProvider';
 
 import createOrRefreshSubscription from './CreateOrRefreshSubscription'
+import { syncAllEventsInCalendar } from './Helpers';
 // const axios = require('axios')
 // const url = 'http://checkip.amazonaws.com/';
 
@@ -44,8 +45,10 @@ export const lambdaHandler = async function(event: any):Promise<String>{
             name:`/users/${userId}/calendars/${calendarId}/events`,
             url: `${process.env.WEBHOOK_URL}/Events`,
             secret: process.env.SUBSCRIPTION_SECRET,
-            changeType:"created"
+            changeType:"created",
+            calendarId: calendarId
         })
+
     }
     let calendarGroupResource = {
         changeType: "updated,deleted",
@@ -61,6 +64,7 @@ export const lambdaHandler = async function(event: any):Promise<String>{
       for (const resource of resources){
           await createOrRefreshSubscription(resource,client,subscriptionLength)
       }
+
       return 'success'
   }
 

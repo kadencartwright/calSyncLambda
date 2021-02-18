@@ -55,9 +55,14 @@ const eventSync = async function (webhookData:any, client:Client): Promise<strin
 
         console.log('getting group members')
        try{     
-            let membersResponse = (await client.api(`/groups/${group.id}/members`).select('mail,displayName').get())
+            let membersResponse = (await client.api(`/groups/${group.id}/members`).select('mail,displayName,id').get())
             let attendees = event.attendees;
-            for (const member of membersResponse.value){
+            for (let member of membersResponse.value){
+                if (member['@odata.type'].includes('graph.orgContact')){
+                    //this means member is contact not AD user. need to fetch contact info.\                console.log('member:')
+                    console.log(JSON.stringify(member))
+                    member = (await client.api(`/contacts/${member.id}`).select('mail,displayName,id').get())
+                }
                 let found = false
                 for (const attendee of attendees){
                     if (member.mail == attendee.emailAddress.address){
@@ -65,7 +70,8 @@ const eventSync = async function (webhookData:any, client:Client): Promise<strin
                         break
                     }
                 }
-                if (!found && !!member?.mail){
+
+                if (!found ){
                     console.log(`added attendee: ${member.mail}`)
 
                     attendees.push({emailAddress:{address:member.mail,name:member.displayName}})

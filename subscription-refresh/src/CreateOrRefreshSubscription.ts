@@ -1,5 +1,5 @@
 import { ResponseType,Client } from '@microsoft/microsoft-graph-client';
-import {getAllPagesFromGraph} from './Helpers'
+import {getAllPagesFromGraph, syncAllEventsInCalendar} from './Helpers'
 export default async function createOrRefreshSubscription(resource:any,client:Client,subscriptionLength:number){
     console.log('CREATING OR REFRESHING SUBCRIPTION')   
     console.log('getting subscriptions to check against')
@@ -43,6 +43,9 @@ export default async function createOrRefreshSubscription(resource:any,client:Cl
                 "clientState": resource.secret,
                 "latestSupportedTlsVersion": "v1_2"
             })
+            if ('calendarId' in resource){
+                await syncAllEventsInCalendar(resource.calendarId,client)
+            }
         }catch(e){
             console.log(e)
         }

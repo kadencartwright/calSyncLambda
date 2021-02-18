@@ -7,13 +7,19 @@ async function syncAllEventsInCalendar(calendarId:String,client:Client){
     //find the group
     try{    
         console.log('getting corresponding group info')
-        let group = (await client.api(`/groups`).filter(`startswith(mail,'${calendarName}@' ) `).get()).value[0]
+        let group = (await client.api(`/groups`).filter(`startswith(mail,'${process.env.GROUP_EMAIL_PREPEND}${calendarName.replace(' ','').toLowerCase()}@' ) `).get()).value[0]
+
         let events= await getAllPagesFromGraph(client.api(`/users/${process.env.CALENDAR_OWNER_UPN}/calendars/${calendarId}/events`))
         console.log('getting group members')
-        let groupMembers = (await getAllPagesFromGraph(client.api(`/groups/${group.id}/members`).select('mail,displayName')))
+        let groupMembers = (await getAllPagesFromGraph(client.api(`/groups/${group.id}/members`).select('mail,displayName,id')))
         for (const event of events){
             let attendees = []
-            for (const groupMember of groupMembers){
+            for (let groupMember of groupMembers){
+                if (groupMember['@odata.type'].includes('graph.orgContact')){
+                    //this means member is contact not AD user. need to fetch contact info.\                console.log('member:')
+                    console.log(JSON.stringify(groupMember))
+                    groupMember = (await client.api(`/contacts/${groupMember.id}`).select('mail,displayName,id').get())
+                }
                 let found = false
                 for (const attendee of event.attendees){
                     if (groupMember.mail == attendee.emailAddress.address){

@@ -43,7 +43,10 @@ const calendarSync = async function (webhookData:any, client:Client): Promise<st
             console.log('attempting to delete subscription to this resource')
             console.log(e)
             try{
+                let subs = await client.api(`/subscriptions/`).get()
+                let sub = subs.filter((x:{resource:String})=> x.resource == change["@odata.id"])
                 await client.api(`/subscriptions/${change.subscriptionId}`).delete();
+                console.log('deleted subscription')
             }catch(e){
                 console.log('the subscription must not exist, so we couldnt delete it')
                 console.log(e)
