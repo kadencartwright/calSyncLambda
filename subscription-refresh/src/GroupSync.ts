@@ -40,6 +40,7 @@ let groupUpdatedHandler: (change: any, client: Client) => void =
 
     //iterate through the users that the webhook reported as affected.
     //from here we will discern whether a user was added or removed from a group and respond appropriately
+    console.log(`received ${userChanges.length} user changes`);
     for (const userChange of userChanges) {
       //we need the user object to construct the attendee object,
       //the attendee object will be used to update each event in the calendar corresponding to the group they were added or removed from
@@ -65,6 +66,7 @@ let groupUpdatedHandler: (change: any, client: Client) => void =
           `/users/${process.env.CALENDAR_OWNER_UPN}/calendarGroups?$filter=startswith(name,'${process.env.CALENDAR_GROUP_NAME}')`
         )
       );
+      console.log(`found ${calendarGroups.length} calendar groups`);
       //now that we have all the groups we want to sync, we can iterate through them and act on all their children (calendars)
       for (const group of calendarGroups) {
         //the filter at the end of this api call ensures we only update events in the calendar corresponding to the group that has been changed
@@ -75,17 +77,16 @@ let groupUpdatedHandler: (change: any, client: Client) => void =
               `/users/${process.env.CALENDAR_OWNER_UPN}/calendarGroups/${group.id}/calendars`
             )
           )
-        )
-          //.filter(calendar=> calendar.name.toLowerCase() == groupName.toLowerCase());
-          .filter((calendar) =>
-            groupMail
-              ?.toLowerCase()
-              .startsWith(
-                `${process.env.GROUP_EMAIL_PREPEND}${calendar.name
-                  ?.toLowerCase()
-                  .replace(" ", "")}@`
-              )
-          );
+        ).filter((calendar) =>
+          groupMail
+            ?.toLowerCase()
+            .startsWith(
+              `${process.env.GROUP_EMAIL_PREPEND}${calendar.name
+                ?.toLowerCase()
+                .replace(/s.*/g, "")}@`
+            )
+        );
+        console.log(`found ${calendars.length} calendars`);
         //now that we have all the calendars contained in the current group we can iterate through them and act on all their children (individual events)
         for (const calendar of calendars) {
           //get all the individual events in a calendar
@@ -101,6 +102,9 @@ let groupUpdatedHandler: (change: any, client: Client) => void =
               console.log("updating event");
               console.log("event:");
               if (new Date(event.end.dateTime) > new Date()) {
+                console.log(
+                  `removing attendee '${attendee.emailAddress.name}' with email address '${attendee.emailAddress.address}'`
+                );
                 //only affect future events, not past ones
                 await client
                   .api(
@@ -115,6 +119,10 @@ let groupUpdatedHandler: (change: any, client: Client) => void =
                       ),
                     ],
                   });
+                console.log(
+                  `removed attendee with email '${attendee.emailAddress.address}' from event '${event}'`
+                );
+
                 //if the user was removed, we will destructure a list of all the current attendees minus the affected user and send back to graph to update the attendee list in the event
               }
             }
@@ -125,6 +133,9 @@ let groupUpdatedHandler: (change: any, client: Client) => void =
               console.log(new Date(event.end.dateTime));
               if (new Date(event.end.dateTime) > new Date()) {
                 //only affect future events, not past ones
+                console.log(
+                  `adding attendee '${attendee.emailAddress.name}' with email address '${attendee.emailAddress.address}'`
+                );
                 await client
                   .api(
                     `/users/${process.env.CALENDAR_OWNER_UPN}/calendarGroups/${group.id}/calendars/${calendar.id}/events/${event.id}?$select=id`
@@ -139,7 +150,9 @@ let groupUpdatedHandler: (change: any, client: Client) => void =
                       attendee,
                     ],
                   }); //if attendee is already in an event we do not want to add them again, so I filtered this array to avoid duplications
-                console.log(`added attendee: ${attendee.emailAddress.address}`);
+                console.log(
+                  `added attendee with email '${attendee.emailAddress.address}''`
+                );
                 //if the user was added, we will destructure a list of all the current attendees and append the affected user and send back to graph to update the attendee list in the event
                 //we also subtract the attendee from the original list to avoid attendee duplication
               }
