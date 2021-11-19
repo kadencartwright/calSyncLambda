@@ -9,7 +9,15 @@ const groupSync = async function (
   console.log("GROUP SYNC ACTIVITY RUNNING");
 
   //assign the input from the orchestrator(Groups) function to a local variable
-  let changes = webhookData.value;
+  await handleGroupChange(webhookData, client);
+  //this doesnt need to necessarily return this token, it is for testing purposes
+  return "success";
+};
+export async function handleGroupChange(
+  changeData: { value: any[] },
+  client: Client
+) {
+  let changes = changeData.value;
   for (const change of changes) {
     if (
       (change.clientState =
@@ -25,14 +33,11 @@ const groupSync = async function (
         "this group webhook did was not relevant so no processing was done"
       );
       console.log(
-        "either subscription secret was incorrect or it did not contain a `members@delta` parameter"
+        "either subscription secret was incorrect or the change data did not contain a `members@delta` parameter"
       );
     }
   }
-  //this doesnt need to necessarily return this token, it is for testing purposes
-  return "success";
-};
-
+}
 let groupUpdatedHandler: (change: any, client: Client) => void =
   async function (change: any, client: Client) {
     //examine the section of webhook data that will tell us what users are different as well as whether they were added or deleted
@@ -77,15 +82,15 @@ let groupUpdatedHandler: (change: any, client: Client) => void =
               `/users/${process.env.CALENDAR_OWNER_UPN}/calendarGroups/${group.id}/calendars`
             )
           )
-        ).filter((calendar) =>
-          groupMail
+        ).filter((calendar) => {
+          return groupMail
             ?.toLowerCase()
             .startsWith(
               `${process.env.GROUP_EMAIL_PREPEND}${calendar.name
                 ?.toLowerCase()
-                .replace(/s.*/g, "")}@`
-            )
-        );
+                .replace(/\s/g, "")}@`
+            );
+        });
         console.log(`found ${calendars.length} calendars`);
         //now that we have all the calendars contained in the current group we can iterate through them and act on all their children (individual events)
         for (const calendar of calendars) {

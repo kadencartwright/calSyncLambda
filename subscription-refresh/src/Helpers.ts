@@ -15,7 +15,7 @@ async function syncAllEventsInCalendar(calendarId: String, client: Client) {
         .api(`/groups`)
         .filter(
           `startswith(mail,'${process.env.GROUP_EMAIL_PREPEND}${calendarName
-            .replace(" ", "")
+            .replace(/\s/g, "")
             .toLowerCase()}@' ) `
         )
         .get()
