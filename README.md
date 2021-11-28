@@ -40,7 +40,7 @@ deploy (first time):
 
 deploy (after first deploy):
 
-    $cd ./subscription-refresh && tsc && cd ../ && sam build -m subscription-refresh/package.json -s ./subscription-refresh && sam deploy --guided
+    $cd ./subscription-refresh && tsc && cd ../ && sam build -m subscription-refresh/package.json -s ./subscription-refresh && sam deploy
 
 ## Azure AD env setup
 

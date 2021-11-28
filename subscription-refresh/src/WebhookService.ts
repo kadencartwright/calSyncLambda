@@ -1,8 +1,4 @@
-import {
-  APIGatewayEvent,
-  APIGatewayProxyEvent,
-  APIGatewayProxyResult,
-} from "aws-lambda";
+import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import * as aws from "aws-sdk";
 
 export const lambdaHandler = async (

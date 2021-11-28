@@ -21,10 +21,6 @@ export const lambdaHandler = async (event: any): Promise<boolean> => {
         console.log("calendars");
         console.log(await CalendarSync(event["data"], client));
         break;
-      case "groups":
-        console.log("groups");
-        console.log(await GroupSync(event["data"], client));
-        break;
       default:
         break;
     }

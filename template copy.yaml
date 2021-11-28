@@ -1,10 +1,10 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   calSyncLambda
 
   Sample SAM Template for calSyncLambda
-  
+
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
@@ -20,17 +20,16 @@ Globals:
         CALENDAR_OWNER_UPN: your calendar anchor UPN here
         CALENDAR_GROUP_NAME: your calendar group name here
         GROUP_EMAIL_PREPEND: your random string here
-
 Resources:
   WebhookService:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: subscription-refresh/dist
       Handler: dist/WebhookService.lambdaHandler
-      Environment: 
+      Environment:
         Variables:
           WEBHOOK_RESPONDER_NAME: !Ref WebhookResponder
-      Events: 
+      Events:
         Webhook:
           Type: Api
           Properties:
@@ -47,16 +46,38 @@ Resources:
         RefreshEvery12hrs:
           Type: Schedule
           Properties:
-            Schedule: rate(12 hours)
+            Schedule: rate(1 minute)
   WebhookResponder:
-      Type: AWS::Serverless::Function
-      Properties:
-        Handler: dist/WebhookResponder.lambdaHandler
-      
-
-
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/WebhookResponder.lambdaHandler
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+  pollGraph:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/pollGraph.lambdaHandler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+      Timeout: 300
+      Events:
+        runEveryMinute:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 minute)
+            Enabled: true
 Outputs:
   WebhookService:
-    Description: 'API Gateway endpoint URL for Prod stage CalSync'
-    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Webhooks/'
-  
+    Description: "API Gateway endpoint URL for Prod stage CalSync"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Webhooks/"

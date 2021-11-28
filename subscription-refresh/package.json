@@ -15,7 +15,8 @@
     "qs": "^6.9.6"
   },
   "scripts": {
-    "test": "mocha tests/unit/"
+    "test": "mocha tests/unit/",
+    "deploy": "tsc && cd ../ && sam build -m subscription-refresh/package.json -s ./subscription-refresh && sam deploy"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.71",
